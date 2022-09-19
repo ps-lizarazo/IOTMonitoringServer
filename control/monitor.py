@@ -11,11 +11,11 @@ from django.conf import settings
 client = mqtt.Client(settings.MQTT_USER_PUB)
 
 def analisis_reto():
-    # Consulta todos los datos de los ultimos 10 minutos, los agrupa por estación y variable
+    # Consulta todos los datos de la última hora, los agrupa por estación y variable
     # Compara el promedio de los valores de humedad contra el valor 34
     # Si el promedio se excede de los límites, se envia un mensaje de alerta.
     data = Data.objects.filter(
-        base_time__gte=datetime.now() - timedelta(minutes=10))
+        base_time__gte=datetime.now() - timedelta(hours=1))
     aggregation = data.annotate(check_value=Avg('avg_value')) \
         .select_related('station', 'measurement') \
         .select_related('station__user', 'station__location') \
