@@ -10,6 +10,50 @@ from django.conf import settings
 
 client = mqtt.Client(settings.MQTT_USER_PUB)
 
+def analisis_reto():
+    # Consulta todos los datos de los ultimos 10 minutos, los agrupa por estación y variable
+    # Compara el promedio de los valores de humedad contra el valor 34
+    # Si el promedio se excede de los límites, se envia un mensaje de alerta.
+    data = Data.objects.filter(
+        base_time__gte=datetime.now() - timedelta(minutes=10))
+    aggregation = data.annotate(check_value=Avg('avg_value')) \
+        .select_related('station', 'measurement') \
+        .select_related('station__user', 'station__location') \
+        .select_related('station__location__city', 'station__location__state',
+                        'station__location__country') \
+        .filter(measurement__name='humedad', station__location__city__name='vancouver',
+                station__location__state__name='bc', station__location__country__name='canada') \
+        .values('check_value', 'station__user__username',
+                'measurement__name',
+                'station__location__city__name',
+                'station__location__state__name',
+                'station__location__country__name')
+    
+    HUMEDAD_LIMIE_VANCOUVER = 34
+    alerts = 0
+    for item in aggregation:
+        alert = False
+
+        variable = item["measurement__name"] # humedad siempre para este caso, esta filtrado
+        max_value = HUMEDAD_LIMIE_VANCOUVER
+
+        country = item['station__location__country__name'] # Siempre Canada
+        state = item['station__location__state__name'] # Siempre BC
+        city = item['station__location__city__name'] # Siempre Vancouver
+        user = item['station__user__username']
+
+        if item["check_value"] > max_value:
+            alert = True
+
+        if alert:
+            message = f"Humedad >{max_value}"
+            topic = '{}/{}/{}/{}/in'.format(country, state, city, user)
+            print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
+            client.publish(topic, message)
+            alerts += 1
+
+    print(len(aggregation), "dispositivos revisados")
+    print(alerts, "alertas enviadas")
 
 def analyze_data():
     # Consulta todos los datos de la última hora, los agrupa por estación y variable
@@ -106,6 +150,7 @@ def start_cron():
     '''
     print("Iniciando cron...")
     schedule.every(5).minutes.do(analyze_data)
+    schedule.every(1).minutes.do(analisis_reto)
     print("Servicio de control iniciado")
     while 1:
         schedule.run_pending()
