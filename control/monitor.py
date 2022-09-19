@@ -53,7 +53,7 @@ def analisis_reto():
             alerts += 1
 
     print(len(aggregation), "dispositivos revisados")
-    print(alerts, "alertas enviadas")
+    print(alerts, "alertas enviadas HUMEDAD Vancouver")
 
 def analyze_data():
     # Consulta todos los datos de la última hora, los agrupa por estación y variable
@@ -149,7 +149,7 @@ def start_cron():
     Inicia el cron que se encarga de ejecutar la función analyze_data cada 5 minutos.
     '''
     print("Iniciando cron...")
-    schedule.every(5).minutes.do(analyze_data)
+    # schedule.every(5).minutes.do(analyze_data)
     schedule.every(1).minutes.do(analisis_reto)
     print("Servicio de control iniciado")
     while 1:
