@@ -28,7 +28,7 @@ def analisis_reto():
                 'station__location__city__name',
                 'station__location__state__name',
                 'station__location__country__name')
-    print(f"Evaluando {len(aggregation)} datos")
+    print(f"Evaluando {len(aggregation)} datos  ")
     HUMEDAD_LIMITE_VANCOUVER = 34
     alerts = 0
     for item in aggregation:
@@ -36,7 +36,7 @@ def analisis_reto():
 
         variable = item["measurement__name"] # humedad siempre para este caso, esta filtrado
         max_value = HUMEDAD_LIMITE_VANCOUVER
-
+        print(f"El promedio de humedad en Vancouver es {item['check_value']} en los ultimos 10 minutos")
         country = item['station__location__country__name'] # Siempre Canada
         state = item['station__location__state__name'] # Siempre BC
         city = item['station__location__city__name'] # Siempre Vancouver
